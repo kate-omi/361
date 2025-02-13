@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
             buffer[n] = '\0';
 
             struct timespec result;
-            if (time_subtract(&result, &x, &y) == 1)
+            if (time_subtract(&result, &x, &y) != 1)
             {
                 printf("\nTime elapsed: %ld.%06ld seconds\n", result.tv_sec, result.tv_nsec);
             }
