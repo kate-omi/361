@@ -8,6 +8,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <time.h>
 
 #define errno_exit(str) \
 	do { int err = errno; perror(str); exit(err); } while (0)
@@ -19,18 +20,21 @@ struct packet {
     char* filename;
     char filedata[1000];
 } typedef packet;
-    
+
 #define MAXBUFLEN 1000
 #define PACKET_SIZE 1028
 #define FTP_YES "yes"
 #define FTP_NO "no"
 #define FTP_ACK "ACK"
 
+double uniform_rand();
 void *get_in_addr(struct sockaddr *sa);
 packet parse_packet_message(char *message);
 
 
 int main(int argc, char *argv[]) {
+    srand48(time(NULL));
+    
     if (argc != 2) {
         printf("usage: server <port>\n");
         exit(0);
@@ -90,33 +94,38 @@ int main(int argc, char *argv[]) {
 
         packet *file_fragments = NULL;
         char *filename = NULL;
-        int num_frags = 0;
+        int num_frags = -1;
         int num_frags_received = 0;
 
-        while (1) {
+        while (num_frags_received != num_frags) {
             char message[PACKET_SIZE];
             if ((numbytes = recvfrom(sockfd, message, PACKET_SIZE , 0, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
                 errno_exit("recvfrom");
             }
+            if (uniform_rand() <= 0.01) {
+                printf("server: skipping packet\n");
+                continue;
+            }
             packet data = parse_packet_message(message);
+            printf("server: received packet fragment no. %d\n (%d, %d)", data.frag_no, num_frags_received, num_frags);
             
             // create fragment array if not created
             if (!file_fragments) {
-                file_fragments = (packet *)malloc(data.total_frag * sizeof(packet));
+                file_fragments = (packet *)calloc(data.total_frag, sizeof(packet));
                 num_frags = data.total_frag;
                 filename = strdup(data.filename);
             }
 
+            if (file_fragments[data.frag_no - 1].frag_no == 0) {
+                num_frags_received++;
+            }
             file_fragments[data.frag_no - 1] = data;
             file_fragments[data.frag_no - 1].filename = strdup(data.filename);
-            num_frags_received++;
 
             // send acknowledgement
             if ((numbytes = sendto(sockfd, FTP_ACK, strlen(FTP_ACK), 0, (struct sockaddr *)&client_addr, client_addr_len)) == -1) {
                 errno_exit("sendto");
             }
-
-            if (num_frags_received == num_frags) break;
         }
         
         printf("File Name: %s, Num Frags: %d, Num Frags Received: %d\n", filename ? filename : "NULL", num_frags, num_frags_received);   
@@ -180,4 +189,8 @@ packet parse_packet_message(char *message) {
     memcpy(data.filedata, filedata_start, data.size);
 
     return data;
+}
+
+double uniform_rand() {
+    return drand48();
 }
