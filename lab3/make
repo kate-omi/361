@@ -1,0 +1,34 @@
+CC = gcc
+
+CFLAGS = -Wall -Wextra -Werror -g -std=c11
+
+TARGETS = server deliver
+
+SRCS = server.c deliver.c
+
+OBJS = $(SRCS:.c=.o)
+
+all: $(TARGETS)
+
+server: server.o
+	$(CC) $(CFLAGS) -o server server.o
+
+deliver: deliver.o
+	$(CC) $(CFLAGS) -o deliver deliver.o
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+install: $(TARGETS)
+	sudo cp $(TARGETS) /usr/local/bin/
+	sudo chmod +x /usr/local/bin/server /usr/local/bin/deliver
+	echo "Executables installed. You can now run 'server <port>' and 'deliver' from anywhere."
+
+uninstall:
+	sudo rm -f /usr/local/bin/server /usr/local/bin/deliver
+	echo "Executables removed from /usr/local/bin."
+
+clean:
+	rm -f $(OBJS) $(TARGETS)
+
+.PHONY: all clean install uninstall
