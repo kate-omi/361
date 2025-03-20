@@ -81,7 +81,7 @@ int main() {
 void *receive_thread(void *arg) {
     int sockfd = *(int *)arg;
 
-    while (1) {
+    while (receiving) {
         message msg;
         if (recv_message(sockfd, &msg) == -1) {
             printf("server disconnected\n");
