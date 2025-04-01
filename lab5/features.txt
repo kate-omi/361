@@ -1,0 +1,34 @@
+
+== Added Features ==
+
+1. Registering new users
+
+Through this feature, users can register new credentials which they can use to login.
+
+Usage: /register <username> <password>
+
+Note: We assume that usernames and passwords don't contain any spaces.
+
+In terms of implementation, this feature introduces a new message type 'REGISTER_USER'.
+It also introduces a corresponding RU_ACK and RU_NACK.
+RU_ACK acknowledges that the credentials were successfully registered.
+RU_NACK indicates a failure to register credentials for reasons such as the username being taken.
+
+To presist added credentials, we now store credentials in a text file to act as a pseudo database.
+
+2. Direct Messages
+
+Through this feature, users can send other users private messages irrespective of sessions.
+
+Usage: /dm <username> <message>
+
+For the implementation, this feature introduces the message type 'DIRECT_MESSAGE'.
+It also introduces a corresponding DM_ACK and DM_NACK.
+DM_ACK acknowledges that the message was successfully sent to the user.
+DM_NACK indicates a failure to send a message for reasons such as:
+    - username not found
+    - user not logged in
+    - invalid user (can't send dm to self)
+
+Note: Both of these features involve sending data that consists of multiple arguments (i.e username & password).
+    So we encode the data using run length encoding to separate them in a defined manner.
